@@ -1,2 +1,9 @@
 .ipynb_checkpoints
 .idea
+
+# temp data folder
+data
+
+# python
+__pycache__
+src/__pycache__

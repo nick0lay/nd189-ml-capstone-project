@@ -7,6 +7,11 @@ from torch.utils.data import TensorDataset
 
 
 def create_loaders(df, target_column, scalers, valid_days, test_days, train_len=7, target_len=1):
+    print(f"Create loaders from {df.shape} with {target_column}")
+    print(df.head())
+    print(f"Scalers: {scalers}")
+    print(f"Valid days: {valid_days}, test days: {test_days}, train lenght: {train_len}, target lenght: {target_len}")
+
     # split data
     valid_start_date = df.index[-valid_days-test_days]
     test_start_date = df.index[-valid_days]
@@ -20,15 +25,18 @@ def create_loaders(df, target_column, scalers, valid_days, test_days, train_len=
     train_norm = normalize_data(train, scalers, True)
     valid_norm = normalize_data(valid, scalers)
     test_norm = normalize_data(test, scalers)
+    print(f"Train norm data shape: {train_norm.shape}")
+    print(f"Valid norm data shape: {valid_norm.shape}")
+    print(f"Test norm data shape: {test_norm.shape}")
 
     # split data to sequences
-    print(f"Split data to sequences.")
+    print(f"Start sequence split")
     X_train, y_train = split_to_sequences(train_norm, train_len, target_len, target_column)
     X_valid, y_valid = split_to_sequences(valid_norm, train_len, target_len, target_column)
     X_test, y_test = split_to_sequences(test_norm, train_len, target_len, target_column)
 
     # create loaders
-    print(f"Create loaders.")
+    print(f"Create loaders")
     loader_train = create_loader(X_train, y_train)
     loader_valid = create_loader(X_valid, y_valid)
     loader_test = create_loader(X_test, y_test)
