@@ -70,7 +70,7 @@ def main(args):
     # test dataset length in days
     test_len = 105 # in days
 
-    epochs=3
+    epochs=args.epochs
     lr=args.learning_rate
 
     # configure feature scalers
@@ -81,7 +81,9 @@ def main(args):
     ]
 
     train_loader, valid_loader, test_loader = create_loaders(data[feature_columns], target_column, scalers, valid_len, test_len)
+    print(f"Create model")
     model = net(args)
+    print(f"Model created")
     train_losses, valid_losses = train_model(model, train_loader, valid_loader, epochs, lr)
 
     path = os.path.join(args.model_dir, model_file)
@@ -92,6 +94,7 @@ def main(args):
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser()
+    parser.add_argument('--epochs', type=int, default=200)
     parser.add_argument('--learning_rate', type=float)
     parser.add_argument('--feature_columns', nargs='+', type=str)
     parser.add_argument('--data', type=str, default=os.environ['SM_CHANNEL_DATA'])

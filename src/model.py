@@ -111,6 +111,7 @@ class TransformerTime2Vec(nn.Module):
     # TODO fix time 2 vector
     def __init__(self, feature_size=2, num_layers=6, dropout=0.2, use_mask=True):
         super(TransformerTime2Vec, self).__init__()
+        print(torch.__version__)
         self.embedding_size = 256
         self.time2vecEncoder = Time2Vector(feature_size, 7)
         self.embedding = nn.Linear(feature_size*2+feature_size, self.embedding_size)

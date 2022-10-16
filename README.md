@@ -20,5 +20,5 @@ export SM_OUTPUT_DATA_DIR=output
 ```
 Run training script
 ```
-python src/hpo.py --learning_rate 0.00001 --data data --feature_columns "Adj Close"
+python src/hpo.py --learning_rate 0.00001 --data data --feature_columns "Adj Close" --epochs=2
 ```
