@@ -22,6 +22,8 @@ model_file='model.pth'
 arguments_file='args.p'
 deafult_feature_columns=['Adj Close']
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 # Load model
 # https://sagemaker.readthedocs.io/en/stable/frameworks/pytorch/using_pytorch.html#load-a-model
 def model_fn(model_dir):
@@ -56,7 +58,9 @@ def output_fn(prediction, content_type):
     logger.info("Transform model output data")
 
 def net(args):
-    return TransformerTime2Vec(feature_size=len(args.feature_columns), use_mask=True)
+    model = TransformerTime2Vec(feature_size=len(args.feature_columns), use_mask=True)
+    model = model.to(device)
+    return model
 
 def main(args):
     logger.info(f'Start training with args: {args}')
@@ -84,10 +88,10 @@ def main(args):
     print(f"Create model")
     model = net(args)
     print(f"Model created")
-    train_losses, valid_losses = train_model(model, train_loader, valid_loader, epochs, lr)
+    train_losses, valid_losses = train_model(model, train_loader, valid_loader, epochs, lr, device=device)
 
     path = os.path.join(args.model_dir, model_file)
-    torch.save(model.state_dict(), path)
+    torch.save(model.to(device).state_dict(), path)
     # save arguments
     path_args = os.path.join(args.model_dir, arguments_file)
     pickle.dump(args, open(path_args, "wb"))
