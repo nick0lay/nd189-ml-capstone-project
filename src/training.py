@@ -3,17 +3,22 @@ import torch
 import numpy as np
 from torch.optim.lr_scheduler import ExponentialLR
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+from smdebug.pytorch import get_hook
+import smdebug.pytorch as smd
 
-use_scheduler = False
-use_mask=True
+use_scheduler = True
 
-def train_model(model, loader_train, loader_valid, epochs=30, lr=0.0001, seq_len=7, device=None):
+def train_model(model, loader_train, loader_valid, epochs=30, lr=0.0001, seq_len=7, use_mask=True, device=None):
+    hook = get_hook(create_if_not_exists=True)
     loss_fn = nn.MSELoss(reduction='mean') # default 'mean'
+    if hook:
+        hook.register_loss(loss_fn)
     # loss_fn = nn.L1Loss();
-    # optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-6)
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr) # training always has a shift from orifgnal series
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=0.001)
+    # optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    # optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.001)
     if use_scheduler:
-        scheduler = ExponentialLR(optimizer, gamma=0.9)
+        scheduler = ExponentialLR(optimizer, gamma=0.9) # 0.995
         # scheduler = ReduceLROnPlateau(optimizer, 'min', factor=0.8)
 
     # generate mask
@@ -25,6 +30,7 @@ def train_model(model, loader_train, loader_valid, epochs=30, lr=0.0001, seq_len
     valid_losses = []
     last_valid_loss = None
     min_epochs = 1000 # use 1000 to disable early stopping
+    train_loss_target = 0.00155
     for epoch in range(epochs):
         print(f"Epoch {epoch + 1}")
         train_loss = train(model, loader_train, loss_fn, optimizer, mask, device=device)
@@ -33,7 +39,7 @@ def train_model(model, loader_train, loader_valid, epochs=30, lr=0.0001, seq_len
         valid_losses.append(valid_loss)
         
         # early training stopping
-        if min_epochs <= epoch and last_valid_loss < valid_loss:
+        if min_epochs <= epoch and last_valid_loss < valid_loss or train_loss < train_loss_target:
             # exit model starts to overfit
             return train_losses, valid_losses
         else:
@@ -41,11 +47,14 @@ def train_model(model, loader_train, loader_valid, epochs=30, lr=0.0001, seq_len
         # if use_scheduler:
         #     scheduler.step(valid_loss) # for ReduceLROnPlateau
     if use_scheduler:
-        scheduler.step()  
+        scheduler.step() # for ExponentialLR 
 
     return train_losses, valid_losses
 
 def train(model, loader, loss_fn, optimizer, mask, device=None):
+    hook = get_hook(create_if_not_exists=True)
+    if hook:
+        hook.set_mode(smd.modes.TRAIN)
     size = len(loader.dataset)
     num_batches = len(loader)
     model.train()
@@ -70,6 +79,9 @@ def train(model, loader, loss_fn, optimizer, mask, device=None):
     return train_loss
 
 def validate(model, loader, loss_fn, mask, device=None):
+    hook = get_hook(create_if_not_exists=True)
+    if hook:
+        hook.set_mode(smd.modes.EVAL)
     num_batches = len(loader)
     model.eval()
     valid_loss = 0
@@ -86,6 +98,9 @@ def validate(model, loader, loss_fn, mask, device=None):
     return valid_loss
 
 def predict(model, loader, mask, device=None):
+    hook = get_hook(create_if_not_exists=True)
+    if hook:
+        hook.set_mode(smd.modes.PREDICT)
     model.eval()
     predictions = np.array([])
     with torch.no_grad():
