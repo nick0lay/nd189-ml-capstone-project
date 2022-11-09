@@ -1,2 +1,3 @@
 smdebug==1.0.12
 smdebug-rulesconfig==1.0.1
+nvgpu==0.9.0

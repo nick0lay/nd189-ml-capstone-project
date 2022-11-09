@@ -5,6 +5,20 @@ import torch
 from torch.utils.data import DataLoader
 from torch.utils.data import TensorDataset
 
+def get_splitted_data(df, valid_days, test_days):
+    print(f"Split data into train/validation/test datasets")
+    print(f"Valid days: {valid_days}, test days: {test_days}")
+
+    # split data
+    valid_start_date = df.index[-valid_days-test_days]
+    test_start_date = df.index[-valid_days]
+    train, rest = split_data(df, valid_start_date)
+    valid, test = split_data(rest, test_start_date)
+    print(f"Train data shape: {train.shape}")
+    print(f"Valid data shape: {valid.shape}")
+    print(f"Test data shape: {test.shape}")
+    
+    return train, valid, test
 
 def create_loaders(df, target_column, scalers, valid_days, test_days, train_len=7, target_len=1):
     print(f"Create loaders from {df.shape} with {target_column}")

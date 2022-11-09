@@ -80,9 +80,6 @@ def input_fn(request_body, request_content_type, context):
     logger.info("Transform input data ...")
     logger.info(f"Request: {request_body}, content type: {request_content_type}")
     data = json.loads(request_body)
-    # data = np.load(io.BytesIO(request_body))
-    # data = data.tolist()
-    # return torch.Tensor(list(data))
     scaled_data = predict_scaler.transform(data[0])
     scaled_data = np.expand_dims(scaled_data, axis=0)
     logger.info(f"Transformed data: {scaled_data}")
@@ -97,6 +94,7 @@ def output_fn(prediction, content_type, context):
     logger.info(f"Data: {prediction} with content type: {content_type}")
     value = prediction.cpu().numpy().astype(float)
     scaled_value = predict_scaler.inverse_transform(value)
+    logger.info(f"Scaled data: {scaled_value} with content type: {content_type}")
     return json.dumps(scaled_value.tolist())
 
 def net(args):

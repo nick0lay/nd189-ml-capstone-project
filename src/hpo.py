@@ -16,6 +16,7 @@ from model import TransformerTime2Vec
 from training import train_model
 
 from smdebug.pytorch import get_hook
+# import smdebug as smd
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -120,7 +121,10 @@ def create_feature_scalers(feature_columns):
 
 def main(args):
     hook = get_hook(create_if_not_exists=True)
+    logger.info(f"Hook created {hook}")
     logger.info(f'Start training with args: {args}')
+    # hook = smd.Hook(out_dir=args.output_dir)
+    # logger.info(f"Hook created {hook}")
 
     # load stock dataset
     data = pd.read_csv(args.data + '/stock.csv')
